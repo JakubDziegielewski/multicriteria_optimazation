@@ -1,12 +1,13 @@
 from src.network import Network, PhysicalNetwork
 from src.node import PhysicalNode
 from src.edge import PhysicalEdge
-from numpy.random import random, randint
+from numpy.random import random, randint, seed
 
 
 class NetworkCreator:
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str, random_seed = 0):
         self.file_path = file_path
+        seed(random_seed)
 
     def create_network(self) -> Network:
         raise NotImplementedError

@@ -14,12 +14,12 @@ class PhysicalEdge(Edge):
         start_node_name: str,
         end_node_name: str,
         throughput: int,
-        latency: int,
+        delay: int,
         error_rate: float,
     ):
         super().__init__(id, start_node_name, end_node_name)
         self.throughput = throughput
-        self.latency = latency
+        self.delay = delay
         self.error_rate = error_rate
     def __repr__(self):
-        return f"{super().__repr__()}, Throughput: {self.throughput}, Latency: {self.latency}, Error rate: {self.error_rate}"
+        return f"{super().__repr__()}, Throughput: {self.throughput}, Latency: {self.delay}, Error rate: {self.error_rate}"
