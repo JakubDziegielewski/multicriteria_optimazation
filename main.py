@@ -8,3 +8,4 @@ path = Path("Montreal", "LosAngeles", network)
 for p in path.edge_path:
     print(p)
 print(f"Throughput: {path.throughput}, Delay: {path.delay}, Error rate: {path.error_rate}")
+print(path.nodes)
