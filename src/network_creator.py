@@ -24,7 +24,7 @@ class NetworkCreator:
             splitted_string[0],
             splitted_string[2],
             splitted_string[3],
-            int(float(splitted_string[10])),
+            int(float(splitted_string[11])),
             randint(0, 10),
             round(random() / 10, 3),
         )
