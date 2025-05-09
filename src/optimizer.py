@@ -37,17 +37,14 @@ class Optimizer:
                 for _ in range(self.population_size)
             ]
         )
-        for _ in range(self.generations):
-            pass
-            
+        
+
         result = self.non_dominated_sorting_algorithm(population)
-        self.crowding_algorithm(result[0])
-        print(result[0][0].crowding_distance)
-        print(result[0][1].crowding_distance)
-        print(result[0][2].crowding_distance)
-        print(result[0][3].crowding_distance)
-        print(result[0][4].crowding_distance)
-        print(result[0][5].crowding_distance)
+        for front in result:
+            self.crowding_algorithm(front)
+        mating_pool = self.tournament_selection(population, self.population_size)
+        for m in mating_pool:
+            print(m.front_pareto)
 
     def crossover(self, path_one: Path, path_two: Path):
         nodes = [Node(name) for name in list(set(path_one.nodes) | set(path_two.nodes))]
@@ -68,6 +65,7 @@ class Optimizer:
         dominated_solutions = [[] for _ in range(population.size)]
         fronts = list()
         current_fronts = list()
+        current_level = 0
 
         for i, first_individual in enumerate(population):
             for j, second_individual in enumerate(population[i + 1 :], start=i + 1):
@@ -77,17 +75,21 @@ class Optimizer:
                 elif second_individual > first_individual:
                     dominated_solutions[j].append(i)
                     domination_count[i] += 1
-        for k, _ in enumerate(population):
+        for k, path in enumerate(population):
             if domination_count[k] == 0:
                 current_fronts.append(k)
+                path.front_pareto = 0
+
         while len(current_fronts) > 0:
             fronts.append(current_fronts)
+            current_level += 1
             next_front = list()
             for front_individual in current_fronts:
                 for id in dominated_solutions[front_individual]:
                     domination_count[id] -= 1
                     if domination_count[id] == 0:
                         next_front.append(id)
+                        population[id].front_pareto = current_level
             current_fronts = next_front
         result_fronts = [np.array([population[i] for i in front]) for front in fronts]
         return result_fronts
@@ -111,3 +113,18 @@ class Optimizer:
                     / difference
                 )
                 path.crowding_distance += distance
+
+    def tournament_selection(self, population: np.ndarray, population_size: int) -> np.ndarray:
+        mating_pool = np.empty(population_size, dtype=Path)
+        for i in range(population_size):
+            individuals = np.random.choice(population, 2, replace=True)
+            if individuals[0].front_pareto < individuals[1].front_pareto:
+                winner = individuals[0]
+            elif individuals[0].front_pareto > individuals[1].front_pareto:
+                winner = individuals[1]
+            elif individuals[0].crowding_distance > individuals[1].crowding_distance:
+                winner = individuals[0]
+            else:
+                winner = individuals[1]
+            mating_pool[i] = winner
+        return mating_pool
