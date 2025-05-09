@@ -22,7 +22,9 @@ class Path:
         self.error_rate = round(sum([edge.error_rate for edge in self.edge_path]), 3)
         self.nodes = self.get_nodes_from_edges()
         self.metrics = [self.throughput, self.delay, self.error_rate]
+        self.front_pareto = None
         self.front_index = None
+        self.crowding_distance = None
 
     def depth_first_search(
         self,
