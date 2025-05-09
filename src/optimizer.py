@@ -16,6 +16,18 @@ class Optimizer:
     
     def nsga2(self):
         population = np.array([Path(self.first_node_name, self.last_node_name, self.network, self.random_seed) for _ in range(self.population_size)])
+        result = self.non_dominated_sorting_algorithm(population)
+        #distance_vector = self.crowding_algorithm(result[0])
+        test = result[0]
+        print(len(test))
+        test[0].metrics = [3, 6]
+        test[1].metrics = [2, 4]
+        test[2].metrics = [4.5, 3.5]
+        test[3].metrics = [3.5, 2.5]
+        test[4].metrics = [5.0, 1.5]
+        test[5].metrics = [6, 3.0]
+        distance_vector = self.crowding_algorithm(test)
+        print(distance_vector)
         
         
     def crossover(self, path_one: Path, path_two: Path):
@@ -30,8 +42,45 @@ class Optimizer:
     
     def non_dominated_sorting_algorithm(self, population:np.ndarray) -> np.ndarray:
         domination_count = np.zeros(population.size)
-        dominated_solutions = [[]] * population.size
+        dominated_solutions = [[] for _ in range(population.size)]
         fronts = list()
-        front_0 = list()
-                    
+        current_fronts = list()
         
+        for i, first_individual in enumerate(population):
+            for j, second_individual in enumerate(population[i+1:], start=i+1):
+                if first_individual > second_individual:
+                    dominated_solutions[i].append(j)
+                    domination_count[j] += 1
+                elif second_individual > first_individual:
+                    dominated_solutions[j].append(i)
+                    domination_count[i] += 1
+        for k, _ in enumerate(population):
+            if domination_count[k] == 0:
+                current_fronts.append(k)
+        while len(current_fronts) > 0:
+            fronts.append(current_fronts)
+            next_front = list()
+            for front_individual in current_fronts:
+                for id in dominated_solutions[front_individual]:
+                    domination_count[id] -= 1
+                    if domination_count[id] == 0:
+                        next_front.append(id)
+            current_fronts = next_front
+        result_fronts = [np.array([population[i] for i in front]) for front in fronts]
+        return result_fronts
+    
+    def crowding_algorithm(self, front: list) -> list:
+        distance_vector = np.zeros(len(front))
+        for i, path in enumerate(front):
+            path.front_index = i
+        for i in range(len(front[0].metrics)):
+            sorted_front = sorted(front, key=lambda x:x.metrics[i])
+            if i == 0:
+                sorted_front = sorted_front[::-1]
+            distance_vector[sorted_front[0].front_index] = float("inf")
+            distance_vector[sorted_front[-1].front_index] = float("inf")
+            difference = abs(sorted_front[0].metrics[i] - sorted_front[-1].metrics[i]) + 1e-9
+            for j, path in enumerate(sorted_front[1:-1], start=1):
+                distance = abs(sorted_front[j + 1].metrics[i] - sorted_front[j - 1].metrics[i]) / difference
+                distance_vector[path.front_index] += distance
+        return distance_vector

@@ -21,6 +21,8 @@ class Path:
         self.delay = sum([edge.delay for edge in self.edge_path])
         self.error_rate = round(sum([edge.error_rate for edge in self.edge_path]), 3)
         self.nodes = self.get_nodes_from_edges()
+        self.metrics = [self.throughput, self.delay, self.error_rate]
+        self.front_index = None
 
     def depth_first_search(
         self,
@@ -53,10 +55,16 @@ class Path:
         self.nodes = self.get_nodes_from_edges()
 
     def __gt__(self, other) -> bool:
+        if self.throughput < other.throughput:
+            return False
+        if self.error_rate > other.error_rate:
+            return False
+        if self.delay > other.delay:
+            return False
         return (
             self.throughput > other.throughput
-            and self.error_rate < other.error_rate
-            and self.delay < other.delay
+            or self.error_rate < other.error_rate
+            or self.delay < other.delay
         )
 
     def __eq__(self, other) -> bool:
