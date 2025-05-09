@@ -37,14 +37,40 @@ class Optimizer:
                 for _ in range(self.population_size)
             ]
         )
-        
 
-        result = self.non_dominated_sorting_algorithm(population)
-        for front in result:
+        fronts = self.non_dominated_sorting_algorithm(population)
+        for front in fronts:
             self.crowding_algorithm(front)
-        mating_pool = self.tournament_selection(population, self.population_size)
-        for m in mating_pool:
-            print(m.front_pareto)
+        for generation in range(self.generations):
+            mating_pool = self.tournament_selection(population, self.population_size)
+            offspring = np.empty(self.population_size, dtype=Path)
+            for i in range(0, len(mating_pool), 2):
+                individual_one, individual_two = mating_pool[i], mating_pool[i + 1]
+                if np.random.random() < self.crossover_probability:
+                    cross_one, cross_two = self.crossover(
+                        individual_one, individual_two
+                    ), self.crossover(individual_one, individual_two)
+                    individual_one, individual_two = cross_one, cross_two
+                if np.random.random() < self.mutation_probability:
+                    individual_one = self.mutation(individual_one)
+                if np.random.random() < self.mutation_probability:
+                    individual_two = self.mutation(individual_two)
+                offspring[i], offspring[i + 1] = individual_one, individual_two
+            resulting_population = np.concatenate((population, offspring))
+            fronts = self.non_dominated_sorting_algorithm(resulting_population)
+            next_population = np.empty(self.population_size, dtype=Path)
+            current_size = 0
+            current_front = 0
+            while current_size + len(fronts[current_front]) <= self.population_size:
+                self.crowding_algorithm(fronts[current_front])
+                next_population[current_size: current_size+len(fronts[current_front])] = fronts[current_front]
+                current_size += len(fronts[current_front])
+                current_front += 1
+            self.crowding_algorithm(fronts[current_front])
+            sorted_front = sorted(fronts[current_front], key=lambda x: x.crowding_distance, reverse=True)
+            next_population[current_size:] = sorted_front[:self.population_size - current_size]    
+            population = next_population
+        return fronts[0]
 
     def crossover(self, path_one: Path, path_two: Path):
         nodes = [Node(name) for name in list(set(path_one.nodes) | set(path_two.nodes))]
@@ -114,7 +140,9 @@ class Optimizer:
                 )
                 path.crowding_distance += distance
 
-    def tournament_selection(self, population: np.ndarray, population_size: int) -> np.ndarray:
+    def tournament_selection(
+        self, population: np.ndarray, population_size: int
+    ) -> np.ndarray:
         mating_pool = np.empty(population_size, dtype=Path)
         for i in range(population_size):
             individuals = np.random.choice(population, 2, replace=True)
