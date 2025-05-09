@@ -26,6 +26,7 @@ class Optimizer:
         self.random_seed = random_seed
 
     def nsga2(self):
+        np.random.seed(self.random_seed)
         population = np.array(
             [
                 Path(
@@ -70,6 +71,8 @@ class Optimizer:
             sorted_front = sorted(fronts[current_front], key=lambda x: x.crowding_distance, reverse=True)
             next_population[current_size:] = sorted_front[:self.population_size - current_size]    
             population = next_population
+        fronts = self.non_dominated_sorting_algorithm(resulting_population)
+        self.crowding_algorithm(fronts[0])
         return fronts[0]
 
     def crossover(self, path_one: Path, path_two: Path):
@@ -145,6 +148,7 @@ class Optimizer:
     ) -> np.ndarray:
         mating_pool = np.empty(population_size, dtype=Path)
         for i in range(population_size):
+            np.random.seed(self.random_seed)
             individuals = np.random.choice(population, 2, replace=True)
             if individuals[0].front_pareto < individuals[1].front_pareto:
                 winner = individuals[0]
