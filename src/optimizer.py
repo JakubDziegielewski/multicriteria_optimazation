@@ -71,7 +71,7 @@ class Optimizer:
             sorted_front = sorted(fronts[current_front], key=lambda x: x.crowding_distance, reverse=True)
             next_population[current_size:] = sorted_front[:self.population_size - current_size]    
             population = next_population
-        fronts = self.non_dominated_sorting_algorithm(resulting_population)
+        fronts = self.non_dominated_sorting_algorithm(population)
         self.crowding_algorithm(fronts[0])
         return fronts[0]
 
