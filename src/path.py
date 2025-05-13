@@ -1,5 +1,5 @@
 from src.network import Network
-from numpy.random import shuffle, seed
+from numpy.random import shuffle
 
 
 class Path:
@@ -7,15 +7,14 @@ class Path:
         self,
         first_node_name: str,
         last_node_name: str,
-        network: Network,
-        random_seed: int = 0,
+        network: Network
     ):
         self.first_node_name = first_node_name
         self.last_node_name = last_node_name
         if last_node_name == first_node_name:
             raise ValueError("Starting Node and Destination Node are the same")
         self.edge_path = self.depth_first_search(
-            network, first_node_name, last_node_name, random_seed=random_seed
+            network, first_node_name, last_node_name
         )
         self.throughput = min([edge.throughput for edge in self.edge_path])
         self.delay = sum([edge.delay for edge in self.edge_path])
@@ -30,14 +29,12 @@ class Path:
         self,
         network: Network,
         first_node_name: str,
-        last_node_name: str,
-        random_seed: int = 0,
+        last_node_name: str
     ) -> list:
         next_node_name = first_node_name
         visited_nodes = [next_node_name]
         edge_queue = [[edge] for edge in network.edges_dict[next_node_name]]
         shuffle(edge_queue)
-        seed(random_seed)
         while len(edge_queue) > 0:
             current_edges = edge_queue.pop(0)
             next_node_name = current_edges[-1].end_node_name
