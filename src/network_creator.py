@@ -1,13 +1,14 @@
 from src.network import Network, PhysicalNetwork
 from src.node import PhysicalNode
 from src.edge import PhysicalEdge
+from typing import Tuple
 from numpy.random import random, randint, seed
 
 
 class NetworkCreator:
     def __init__(self, file_path: str, random_seed = 0):
         self.file_path = file_path
-        seed(random_seed)
+        self.random_seed = 0
 
     def create_network(self) -> Network:
         raise NotImplementedError
@@ -18,17 +19,27 @@ class NetworkCreator:
             splitted_string[0], float(splitted_string[2]), float(splitted_string[3])
         )
 
-    def __read_physical_edge__(self, edge_string: str) -> PhysicalEdge:
+    def __read_physical_edge__(self, edge_string: str, demands: dict) -> PhysicalEdge:
         splitted_string = edge_string.strip().split(" ")
+        seed(self.random_seed)
+        self.random_seed += 1
+        first_node = splitted_string[2]
+        end_node = splitted_string[3]
+        throughput = demands[first_node + end_node]
         return PhysicalEdge(
             splitted_string[0],
-            splitted_string[2],
-            splitted_string[3],
-            int(float(splitted_string[11])),
+            first_node,
+            end_node,
+            throughput,
             randint(0, 10),
             round(random() / 10, 3),
         )
 
+    def _read_demand(self, demand_string: str) -> Tuple[str, int]:
+        splitted_string = demand_string.strip().split(" ")
+        return splitted_string[2] + splitted_string[3], int(float(splitted_string[6])) * 2 #change units to Mbits/s
+    
+        
     def create_physical_network(self):
         with open(self.file_path) as f:
             lines = f.readlines()
@@ -40,8 +51,14 @@ class NetworkCreator:
         ]
         first_edge_index = lines.index("LINKS (\n", last_node_index) + 1
         last_edge_index = lines.index(")\n", first_edge_index)
+        demands = {}
+        first_demand_index = lines.index("DEMANDS (\n", last_edge_index) + 1
+        last_demand_index = lines.index(")\n", first_demand_index)
+        for line in lines[first_demand_index:last_demand_index]:
+            demand = self._read_demand(line)
+            demands[demand[0]] = demand[1]
         edges = [
-            self.__read_physical_edge__(line)
+            self.__read_physical_edge__(line, demands)
             for line in lines[first_edge_index:last_edge_index]
         ]
         return PhysicalNetwork(nodes, edges)
