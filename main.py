@@ -8,3 +8,6 @@ fronts = optimizer.nsga2()
 for front in fronts:
     print(len(front.nodes))
 print(f"Size of front zero: {len(fronts)}")
+for front in fronts:
+    print(len(front.nodes))
+print(f"Size of front zero: {len(fronts)}")
