@@ -34,7 +34,6 @@ class Path:
         next_node_name = first_node_name
         visited_nodes = [next_node_name]
         edge_queue = [[edge] for edge in network.edges_dict[next_node_name]]
-        seed(random_seed)
         shuffle(edge_queue)
         while len(edge_queue) > 0:
             current_edges = edge_queue.pop(0)

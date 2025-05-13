@@ -18,16 +18,12 @@ class NetworkCreator:
         )
 
     def __read_physical_edge__(self, edge_string: str, demands: dict) -> PhysicalEdge:
-    def __read_physical_edge__(self, edge_string: str, demands: dict) -> PhysicalEdge:
         splitted_string = edge_string.strip().split(" ")
         first_node = splitted_string[2]
         end_node = splitted_string[3]
         throughput = demands[first_node + end_node]
         return PhysicalEdge(
             splitted_string[0],
-            first_node,
-            end_node,
-            throughput,
             first_node,
             end_node,
             throughput,
@@ -70,7 +66,6 @@ class NetworkCreator:
             demand = self._read_demand(line)
             demands[demand[0]] = demand[1]
         edges = [
-            self.__read_physical_edge__(line, demands)
             self.__read_physical_edge__(line, demands)
             for line in lines[first_edge_index:last_edge_index]
         ]

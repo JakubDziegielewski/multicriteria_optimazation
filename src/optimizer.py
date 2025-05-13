@@ -102,15 +102,6 @@ class Optimizer:
             : self.population_size - current_size
         ]
         return next_population
-                offspring[i], offspring[i + 1] = self.evolution_operations(
-                    individual_one, individual_two
-                )
-            resulting_population = np.concatenate((population, offspring))
-            fronts = self.non_dominated_sorting_algorithm(resulting_population)
-            population = self.choose_next_population(fronts)
-        fronts = self.non_dominated_sorting_algorithm(population)
-        self.crowding_algorithm(fronts[0])
-        return fronts[0]
 
     def evolution_operations(
         self, individual_one: Path, individual_two: Path
