@@ -42,7 +42,7 @@ class NetworkCreator:
         return splitted_string[2] + splitted_string[3], int(float(splitted_string[6])) * 2 #change units to Mbits/s
     
         
-    def create_physical_network(self):
+    def create_physical_network(self) -> Network:
         with open(self.file_path) as f:
             lines = f.readlines()
         first_node_index = lines.index("NODES (\n") + 1

@@ -1,0 +1,30 @@
+NODES (
+  Vancouver ( -123.10 49.22 )
+  LosAngeles ( -118.40 33.93 )
+  SanFrancisco ( -122.38 37.62 )
+  LasVegas ( -115.17 36.08 )
+)
+
+LINKS (
+  L0 ( Vancouver LosAngeles ) 0.00 0.00 0.00 0.00 ( 1008.00 405.00 )
+  L1 ( Vancouver SanFrancisco ) 0.00 0.00 0.00 0.00 ( 1008.00 123.00 )
+  L2 ( LosAngeles Vancouver ) 0.00 0.00 0.00 0.00 ( 1008.00 327.00 )
+  L3 ( LosAngeles LasVegas ) 0.00 0.00 0.00 0.00 ( 1008.00 227.00 )
+  L4 ( SanFrancisco Vancouver ) 0.00 0.00 0.00 0.00 ( 1008.00 102.00 )
+  L5 ( SanFrancisco LasVegas ) 0.00 0.00 0.00 0.00 ( 1008.00 327.00 )
+  L6 ( LasVegas SanFrancisco ) 0.00 0.00 0.00 0.00 ( 1008.00 529.00 )
+  L7 ( LasVegas LosAngeles ) 0.00 0.00 0.00 0.00 ( 1008.00 529.00 )
+)
+
+DEMANDS (
+  D0 ( Vancouver LosAngeles ) 1 500.00 UNLIMITED
+  D1 ( Vancouver SanFrancisco ) 1 100.00 UNLIMITED
+  D2 ( LosAngeles Vancouver ) 1 500.00 UNLIMITED
+  D3 ( LosAngeles LasVegas ) 1 500.00 UNLIMITED
+  D4 ( SanFrancisco Vancouver ) 1 100.00 UNLIMITED
+  D5 ( SanFrancisco LasVegas ) 1 100.00 UNLIMITED
+  D6 ( LasVegas SanFrancisco ) 1 100.00 UNLIMITED
+  D7 ( LasVegas LosAngeles ) 1 500.00 UNLIMITED
+)
+
+  #

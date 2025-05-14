@@ -7,18 +7,24 @@ class Path:
         self,
         first_node_name: str,
         last_node_name: str,
-        network: Network
+        network: Network,
+        edge_path: list = None,
     ):
-        self.first_node_name = first_node_name
-        self.last_node_name = last_node_name
-        if last_node_name == first_node_name:
-            raise ValueError("Starting Node and Destination Node are the same")
-        self.edge_path = self.depth_first_search(
-            network, first_node_name, last_node_name
-        )
-        self.throughput = min([edge.throughput for edge in self.edge_path])
-        self.delay = sum([edge.delay for edge in self.edge_path])
-        self.error_rate = round(sum([edge.error_rate for edge in self.edge_path]), 3)
+        if edge_path is None:
+            self.first_node_name = first_node_name
+            self.last_node_name = last_node_name
+            if last_node_name == first_node_name:
+                raise ValueError("Starting Node and Destination Node are the same")
+            self.edge_path = self.depth_first_search(
+                network, first_node_name, last_node_name
+            )
+        else:
+            self.first_node_name = edge_path[0].start_node_name
+            self.first_node_name = edge_path[-1].end_node_name
+            self.edge_path = edge_path
+        self.throughput = self.calculate_throughput()
+        self.delay = self.calculate_delay()
+        self.error_rate = self.calculate_error_rate()
         self.nodes = self.get_nodes_from_edges()
         self.metrics = [self.throughput, self.delay, self.error_rate]
         self.front_pareto = None
@@ -26,10 +32,7 @@ class Path:
         self.crowding_distance = None
 
     def depth_first_search(
-        self,
-        network: Network,
-        first_node_name: str,
-        last_node_name: str
+        self, network: Network, first_node_name: str, last_node_name: str
     ) -> list:
         next_node_name = first_node_name
         visited_nodes = [next_node_name]
@@ -71,3 +74,15 @@ class Path:
 
     def __hash__(self):
         return hash(self.nodes)
+
+    def calculate_throughput(self) -> int:
+        return min([edge.throughput for edge in self.edge_path])
+    
+    def calculate_delay(self) -> int:
+        return sum([edge.delay for edge in self.edge_path])
+    
+    def calculate_error_rate(self) -> float:
+        return round(sum([edge.error_rate for edge in self.edge_path]), 3)
+    
+    def update_metrics(self) -> None:
+        self.metrics = [self.throughput, self.delay, self.error_rate]
