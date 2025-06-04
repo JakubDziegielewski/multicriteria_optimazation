@@ -1,49 +1,67 @@
-from src.network_creator import NetworkCreator
+import matplotlib
+matplotlib.use("TkAgg")
+import matplotlib.pyplot as plt
+import numpy as np
+from src.metrics import calculate_hypervolume
 from src.optimizer import Optimizer
 from src.ISPEA2Optimizer import ISPEA2Optimizer
-from src.metrics import calculate_hypervolume
+from src.network_creator import NetworkCreator
+import random
 
-# -- Tworzenie sieci --
+
+runs = 10
+reference_point = [0, 1000, 1.0]
+
+hv_nsga2_values = []
+hv_ispea2_values = []
+
+
 network_creator = NetworkCreator("network_source/janos-us-ca")
 network = network_creator.create_physical_network()
 
-# -- NSGA-II --
-optimizer = Optimizer("Portland", "Miami", network, 10, 0.2, 0.3, generations=10)
-front_nsga2 = optimizer.nsga2()
 
-print("NSGA-II Front:")
-for path in front_nsga2:
-    print(f"Nodes: {len(path.nodes)}")
+for i in range(runs):
+    print(f"Run {i + 1}/{runs}")
+    seed = 42 + i
+    random.seed(seed)
+    np.random.seed(seed)
 
-print(f"Size of NSGA-II front: {len(front_nsga2)}\n")
+    nsga2_opt = Optimizer("Portland", "Miami", network, 10, 0.2, 0.3, generations=10)
+    ispea2_opt = ISPEA2Optimizer("Portland", "Miami", network, 10, 0.2, 0.3, generations=10)
 
-# -- ISPEA2 --
-ispea2 = ISPEA2Optimizer("Portland", "Miami", network, 10, 0.2, 0.3, generations=10)
-front_ispea2 = ispea2.run()
+    front_nsga2 = nsga2_opt.nsga2()
+    front_ispea2 = ispea2_opt.run()
 
-print("ISPEA2 Front:")
-for path in front_ispea2:
-    print(f"Nodes: {len(path.nodes)}")
+    def transform(front):
+        for ind in front:
+            ind.metrics = [-ind.metrics[0], ind.metrics[1], ind.metrics[2]]
+        return front
 
-print(f"Size of ISPEA2 front: {len(front_ispea2)}\n")
+    front_nsga2 = transform(front_nsga2)
+    front_ispea2 = transform(front_ispea2)
 
-# -- Transformacja metryk: throughput → -throughput (dla minimalizacji)
-def transform_metrics(front):
-    for path in front:
-        throughput, delay, error = path.metrics
-        path.metrics = [-throughput, delay, error]
-    return front
+    hv_nsga2 = calculate_hypervolume(front_nsga2, reference_point)
+    hv_ispea2 = calculate_hypervolume(front_ispea2, reference_point)
 
-front_nsga2 = transform_metrics(front_nsga2)
-front_ispea2 = transform_metrics(front_ispea2)
+    hv_nsga2_values.append(hv_nsga2)
+    hv_ispea2_values.append(hv_ispea2)
 
-# -- Punkt referencyjny dla HV (większy niż najgorsze metryki)
-reference_point = [0, 1000, 1.0]
 
-# -- Obliczanie HV
-hv_nsga2 = calculate_hypervolume(front_nsga2, reference_point)
-hv_ispea2 = calculate_hypervolume(front_ispea2, reference_point)
+mean_nsga2 = np.mean(hv_nsga2_values)
+std_nsga2 = np.std(hv_nsga2_values)
+mean_ispea2 = np.mean(hv_ispea2_values)
+std_ispea2 = np.std(hv_ispea2_values)
 
-# -- Wyniki
-print(f"NSGA-II HV: {hv_nsga2:.4f}")
-print(f"ISPEA2   HV: {hv_ispea2:.4f}")
+print(f"\nNSGA-II HV: mean = {mean_nsga2:.4f}, std = {std_nsga2:.4f}")
+print(f"ISPEA2   HV: mean = {mean_ispea2:.4f}, std = {std_ispea2:.4f}")
+
+
+plt.figure(figsize=(8, 5))
+plt.bar(['NSGA-II', 'ISPEA2'], [mean_nsga2, mean_ispea2],
+        yerr=[std_nsga2, std_ispea2], capsize=10, color=['#1f77b4', '#ff7f0e'])
+plt.ylabel('Hypervolume (HV)')
+plt.title(f'Porównanie Hypervolume ({runs} uruchomień)')
+plt.grid(True, axis='y', linestyle='--', alpha=0.6)
+plt.tight_layout()
+plt.savefig("hv_comparison.png")
+plt.show()
