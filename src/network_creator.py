@@ -6,10 +6,8 @@ from numpy.random import random, randint
 
 
 class NetworkCreator:
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str = None):
         self.file_path = file_path
-    def create_network(self) -> Network:
-        raise NotImplementedError
 
     def __read_physical_node__(self, node_string: str) -> PhysicalNode:
         splitted_string = node_string.strip().split(" ")
@@ -33,16 +31,21 @@ class NetworkCreator:
 
     def _read_demand(self, demand_string: str) -> Tuple[str, int]:
         splitted_string = demand_string.strip().split(" ")
-        return splitted_string[2] + splitted_string[3], int(float(splitted_string[6])) * 2 #change units to Mbits/s
-    
-        
+        return (
+            splitted_string[2] + splitted_string[3],
+            int(float(splitted_string[6])) * 2,
+        )  # change units to Mbits/s
 
     def _read_demand(self, demand_string: str) -> Tuple[str, int]:
         splitted_string = demand_string.strip().split(" ")
-        return splitted_string[2] + splitted_string[3], int(float(splitted_string[6])) * 2 #change units to Mbits/s
-    
-        
+        return (
+            splitted_string[2] + splitted_string[3],
+            int(float(splitted_string[6])) * 2,
+        )  # change units to Mbits/s
+
     def create_physical_network(self) -> Network:
+        if self.file_path is None:
+            raise ValueError("File path not specified")
         with open(self.file_path) as f:
             lines = f.readlines()
         first_node_index = lines.index("NODES (\n") + 1
@@ -78,8 +81,22 @@ class NetworkCreator:
             for second_node in range(first_node + 1, number_of_nodes):
                 first_id = str(first_node)
                 second_id = str(second_node)
-                edge_one = PhysicalEdge(f"L_{first_id}_{second_id}", first_id, second_id, randint(100, 1000), randint(0, 10), round(random() / 10, 3))
-                edge_two = PhysicalEdge(f"L_{second_id}_{first_id}", second_id, first_id, randint(100, 1000), randint(0, 10), round(random() / 10, 3))
+                edge_one = PhysicalEdge(
+                    f"L_{first_id}_{second_id}",
+                    first_id,
+                    second_id,
+                    randint(100, 1000),
+                    randint(0, 10),
+                    round(random() / 10, 3),
+                )
+                edge_two = PhysicalEdge(
+                    f"L_{second_id}_{first_id}",
+                    second_id,
+                    first_id,
+                    randint(100, 1000),
+                    randint(0, 10),
+                    round(random() / 10, 3),
+                )
                 edges.append(edge_one)
                 edges.append(edge_two)
         return PhysicalNetwork(nodes, edges)

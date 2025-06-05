@@ -17,8 +17,9 @@ hv_ispea2_values = []
 
 
 network_creator = NetworkCreator("network_source/janos-us-ca")
+#full_mesh_network_creator = NetworkCreator()
 network = network_creator.create_physical_network()
-#network = network_creator.create_full_mesh_network(50)
+#network = full_mesh_network_creator.create_full_mesh_network(30)
 
 for i in range(runs):
     print(f"Run {i + 1}/{runs}")
