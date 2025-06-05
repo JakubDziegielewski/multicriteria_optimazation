@@ -1,5 +1,5 @@
 from src.network import Network, PhysicalNetwork
-from src.node import PhysicalNode
+from src.node import Node, PhysicalNode
 from src.edge import PhysicalEdge
 from typing import Tuple
 from numpy.random import random, randint
@@ -69,4 +69,17 @@ class NetworkCreator:
             self.__read_physical_edge__(line, demands)
             for line in lines[first_edge_index:last_edge_index]
         ]
+        return PhysicalNetwork(nodes, edges)
+
+    def create_full_mesh_network(self, number_of_nodes: int) -> Network:
+        nodes = [Node(str(id)) for id in range(number_of_nodes)]
+        edges = []
+        for first_node in range(number_of_nodes):
+            for second_node in range(first_node + 1, number_of_nodes):
+                first_id = str(first_node)
+                second_id = str(second_node)
+                edge_one = PhysicalEdge(f"L_{first_id}_{second_id}", first_id, second_id, randint(100, 1000), randint(0, 10), round(random() / 10, 3))
+                edge_two = PhysicalEdge(f"L_{second_id}_{first_id}", second_id, first_id, randint(100, 1000), randint(0, 10), round(random() / 10, 3))
+                edges.append(edge_one)
+                edges.append(edge_two)
         return PhysicalNetwork(nodes, edges)
