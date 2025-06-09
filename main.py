@@ -16,10 +16,10 @@ hv_nsga2_values = []
 hv_ispea2_values = []
 
 
-network_creator = NetworkCreator("network_source/janos-us-ca")
-#full_mesh_network_creator = NetworkCreator()
-network = network_creator.create_physical_network()
-#network = full_mesh_network_creator.create_full_mesh_network(30)
+# network_creator = NetworkCreator("network_source/janos-us-ca")
+full_mesh_network_creator = NetworkCreator()
+# network = network_creator.create_physical_network()
+network = full_mesh_network_creator.create_full_mesh_network(30)
 
 for i in range(runs):
     print(f"Run {i + 1}/{runs}")
@@ -27,10 +27,10 @@ for i in range(runs):
     random.seed(seed)
     np.random.seed(seed)
 
-    nsga2_opt = Optimizer("Portland", "Miami", network, 10, 0.2, 0.3, generations=10)
-    #nsga2_opt = Optimizer("1", "2", network, 10, 0.2, 0.3, generations=10)
-    ispea2_opt = ISPEA2Optimizer("Portland", "Miami", network, 10, 0.2, 0.3, generations=10)
-    #ispea2_opt = ISPEA2Optimizer("1", "2", network, 10, 0.2, 0.3, generations=10)
+    # nsga2_opt = Optimizer("Portland", "Miami", network, 10, 0.2, 0.3, generations=10)
+    nsga2_opt = Optimizer("1", "2", network, 10, 0.2, 0.3, generations=10)
+    # ispea2_opt = ISPEA2Optimizer("Portland", "Miami", network, 10, 0.2, 0.3, generations=10)
+    ispea2_opt = ISPEA2Optimizer("1", "2", network, 10, 0.2, 0.3, generations=10)
 
     front_nsga2 = nsga2_opt.nsga2()
     front_ispea2 = ispea2_opt.run()

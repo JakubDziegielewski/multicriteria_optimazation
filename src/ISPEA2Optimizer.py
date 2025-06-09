@@ -1,7 +1,7 @@
 import numpy as np
 from src.path import Path
 from src.network import Network
-from typing import Tuple
+from typing import List, Optional
 
 class ISPEA2Optimizer:
     def __init__(
@@ -22,7 +22,7 @@ class ISPEA2Optimizer:
         self.mutation_probability = mutation_probability
         self.generations = generations
 
-    def crossover(self, parent1: Path, parent2: Path):
+    def crossover(self, parent1: Path, parent2: Path) -> Path:
         nodes = list(set(parent1.nodes + parent2.nodes))
         edges = list(set(parent1.edge_path + parent2.edge_path))
         subnetwork = Network(
@@ -31,40 +31,56 @@ class ISPEA2Optimizer:
         )
         return Path(self.first_node_name, self.last_node_name, subnetwork)
 
-    def mutation(self, path: Path):
+    def mutation(self, path: Path) -> Path:
+        # Tu można dodać bardziej zaawansowaną mutację
         return Path(self.first_node_name, self.last_node_name, self.network)
 
     def dominates(self, a: Path, b: Path) -> bool:
-        return a > b
+        """a dominuje b jeśli jest lepszy we wszystkich celach i lepszy w co najmniej jednym"""
+        better_or_equal = all(x <= y for x, y in zip(a.metrics, b.metrics))
+        strictly_better = any(x < y for x, y in zip(a.metrics, b.metrics))
+        return better_or_equal and strictly_better
 
-    def calculate_fitness(self, population, archive):
-        for path in population:
-            strength = sum(1 for other in population if path > other)
-            path.strength = strength
+    def calculate_fitness(self, population: List[Path], archive: Optional[List[Path]] = None):
+        if archive is None:
+            archive = []
+        combined = population + archive
 
-        for path in population:
-            path.raw_fitness = sum(other.strength for other in population if other > path)
+        # Strength obliczamy tylko dla populacji (lub combined)
+        for p in combined:
+            p.strength = sum(1 for q in combined if self.dominates(p, q))
 
-        for path in population:
-            distances = [self.euclidean_distance(path.metrics, other.metrics) for other in population if other != path]
-            if len(distances) >= 1:
-                path.density = 1 / (np.partition(distances, 0)[0] + 2)
-            else:
-                path.density = 1  # lub np.inf, w zależności od logiki
-            path.fitness = path.raw_fitness + path.density
+        for p in combined:
+            p.raw_fitness = sum(q.strength for q in combined if self.dominates(q, p))
 
-    def euclidean_distance(self, a, b):
+        # Gęstość – odległość do k-tego sąsiada (k = sqrt(N))
+        k = int(np.sqrt(len(combined)))
+        for p in combined:
+            distances = [self.euclidean_distance(p.metrics, q.metrics) for q in combined if q != p]
+            distances.sort()
+            sigma_k = distances[k] if k < len(distances) else distances[-1] if distances else 1e-9
+            p.density = 1 / (sigma_k + 2)
+
+        for p in combined:
+            p.fitness = p.raw_fitness + p.density
+
+    @staticmethod
+    def euclidean_distance(a, b) -> float:
         return np.linalg.norm(np.array(a) - np.array(b))
 
-    def environmental_selection(self, combined, size):
+    def environmental_selection(self, combined: List[Path], size: int) -> List[Path]:
         sorted_pop = sorted(combined, key=lambda x: x.fitness)
-        return sorted_pop[:size]
+        selected = sorted_pop[:size]
+        # Jeśli jest więcej niż size elementów na granicy, można dodać logikę gęstości, ale uprościmy
+        return selected
 
-    def tournament_selection(self, population):
+    def tournament_selection(self, population: List[Path]) -> Path:
+        if len(population) == 1:
+            return population[0]
         a, b = np.random.choice(population, 2, replace=False)
         return a if a.fitness < b.fitness else b
 
-    def run(self):
+    def run(self) -> List[Path]:
         population = [Path(self.first_node_name, self.last_node_name, self.network) for _ in range(self.population_size)]
         archive = []
 
@@ -73,18 +89,28 @@ class ISPEA2Optimizer:
             mating_pool = [self.tournament_selection(population) for _ in range(self.population_size)]
 
             offspring = []
-            for i in range(0, len(mating_pool), 2):
-                p1, p2 = mating_pool[i], mating_pool[i+1]
+            i = 0
+            while i + 1 < len(mating_pool):
+                p1, p2 = mating_pool[i], mating_pool[i + 1]
                 if np.random.random() < self.crossover_probability:
                     child1 = self.crossover(p1, p2)
                     child2 = self.crossover(p2, p1)
                 else:
                     child1, child2 = p1, p2
+
                 if np.random.random() < self.mutation_probability:
                     child1 = self.mutation(child1)
                 if np.random.random() < self.mutation_probability:
                     child2 = self.mutation(child2)
+
                 offspring.extend([child1, child2])
+                i += 2
+
+            if i < len(mating_pool):
+                remaining = mating_pool[i]
+                if np.random.random() < self.mutation_probability:
+                    remaining = self.mutation(remaining)
+                offspring.append(remaining)
 
             combined = population + archive + offspring
             self.calculate_fitness(combined, archive)
