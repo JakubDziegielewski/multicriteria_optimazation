@@ -149,3 +149,39 @@ class Optimizer:
                 winner = b
             mating_pool[i] = winner
         return mating_pool
+
+    def nsga2_full_trace(self):
+        population = np.array([
+            Path(self.first_node_name, self.last_node_name, self.network)
+            for _ in range(self.population_size)
+        ])
+
+        fronts = self.non_dominated_sorting_algorithm(population)
+        for front in fronts:
+            self.crowding_algorithm(front)
+
+        fronts_history = []  # tutaj będziemy zbierać fronty po każdej generacji
+
+        for _ in range(self.generations):
+            mating_pool = self.tournament_selection_nsga2(population, self.population_size)
+            offspring = []
+
+            i = 0
+            while i + 1 < len(mating_pool):
+                ind1, ind2 = mating_pool[i], mating_pool[i + 1]
+                child1, child2 = self.evolution_operations(ind1, ind2)
+                offspring.extend([child1, child2])
+                i += 2
+
+            if i < len(mating_pool):
+                offspring.append(self.mutation(mating_pool[i]))
+
+            population = np.array(population.tolist() + offspring[:self.population_size], dtype=Path)
+            fronts = self.non_dominated_sorting_algorithm(population)
+            population = self.choose_next_population(fronts)
+
+            # zapisz aktualny front najlepszych rozwiązań
+            best_front = fronts[0]
+            fronts_history.append(best_front)
+
+        return fronts_history

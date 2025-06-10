@@ -118,3 +118,48 @@ class ISPEA2Optimizer:
             archive = self.environmental_selection(combined, self.population_size)
 
         return archive
+
+    def run_full_trace(self) -> List[List[Path]]:
+        population = [Path(self.first_node_name, self.last_node_name, self.network) for _ in
+                      range(self.population_size)]
+        archive = []
+
+        archive_history = []
+
+        for _ in range(self.generations):
+            self.calculate_fitness(population, archive)
+            mating_pool = [self.tournament_selection(population) for _ in range(self.population_size)]
+
+            offspring = []
+            i = 0
+            while i + 1 < len(mating_pool):
+                p1, p2 = mating_pool[i], mating_pool[i + 1]
+                if np.random.random() < self.crossover_probability:
+                    child1 = self.crossover(p1, p2)
+                    child2 = self.crossover(p2, p1)
+                else:
+                    child1, child2 = p1, p2
+
+                if np.random.random() < self.mutation_probability:
+                    child1 = self.mutation(child1)
+                if np.random.random() < self.mutation_probability:
+                    child2 = self.mutation(child2)
+
+                offspring.extend([child1, child2])
+                i += 2
+
+            if i < len(mating_pool):
+                remaining = mating_pool[i]
+                if np.random.random() < self.mutation_probability:
+                    remaining = self.mutation(remaining)
+                offspring.append(remaining)
+
+            combined = population + archive + offspring
+            self.calculate_fitness(combined, archive)
+            population = self.environmental_selection(combined, self.population_size)
+            archive = self.environmental_selection(combined, self.population_size)
+
+            # Zapisz kopię archiwum po każdej generacji
+            archive_history.append(archive.copy())
+
+        return archive_history
